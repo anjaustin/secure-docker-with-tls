@@ -207,7 +207,7 @@ client-auth.cnf
 
 If the `umask` of the machine you're using to create the credentials is set to 022, your secret keys are world-readable and writable for you and your group. You can learn more about setting your `umask` [here](https://www.linuxnix.com/umask-define-linuxunix/). Let's protect our credentials from accidental corruption by setting the proper permissions.
 
-For your eyes only...
+For your eyes only. 👀
 
 ```bash
 chmod -v 0400 ca-key.pem key.pem server-key.pem
