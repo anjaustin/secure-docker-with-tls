@@ -160,7 +160,7 @@ First, the client key.
 openssl genrsa -out key.pem 4096
 ```
 
-Then, create the client's certificate signing request.
+Then, the client's certificate signing request.
 
 ```bash
 openssl req -subj '/CN=client' -new -key key.pem -out client.csr
@@ -204,6 +204,7 @@ client-auth.cnf
 ```
 
 **5. Setting permissions.**
+
 If the `umask` of the machine you're using to create the credentials is set to 022, your secret keys are world-readable and writable for you and your group. You can learn more about setting your `umask` [here](https://www.linuxnix.com/umask-define-linuxunix/). Let's protect our credentials from accidental corruption by setting the proper permissions.
 
 For your eyes only...
