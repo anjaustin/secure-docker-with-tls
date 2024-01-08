@@ -183,9 +183,39 @@ Finally, we have all the necessary credentials for the server and clients that n
 
 ---
 
-## Secure Docker with TLS verification 
+## Secure Docker with TLS verification
 
 **1. Configure `dockerd` for TLS using the server credentials you created earlier.**
+
+NOTE: I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your docker daemon over tls without this modifcation. Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will you to enable TLS for docker.
+
+First, create the override.conf file for the docker.service.
+
+```bash
+echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd" > override.conf
+cat override.conf # Make sure the `newlines` are actually newlines and not the ASCII characters. 
+```
+
+Next, create the service directory to allow the docker daemon use your new configuration.
+
+```bash
+sudo mkdir /etc/systemd/system/docker.service.d
+```
+
+If you get the following warning then the directory already exists. So, all we need to do next is copy the new configuration file to that directory, reload the systemd daemon, and restart the Docker daemon.
+
+```bash
+mkdir: cannot create directory ‘/etc/systemd/system/docker.service.d’: File exists
+```
+
+Now, copy the `override.conf` file to the docker service directory, reload the systemd daemon, and restart the Docker daemon.
+
+```bash
+sudo cp -v override.conf /etc/systemd/system/docker.service.d/
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
 
 ```bash
 dockerd \
