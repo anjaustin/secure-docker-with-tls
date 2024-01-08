@@ -219,7 +219,7 @@ For the world to see, but not to change.
 chmod -v 0444 ca.pem server-cert.pem cert.pem
 ```
 
-Finally, we have all the necessary credentials for the server and clients that need to connect to the server. Next, we need to configure the Docker daemon (docker.service), to only accept connections from clients that provide a trusted certificate, issued by your Certificate Authority. (CA).
+Finally, we have all the necessary credentials for the server and clients that need to connect to the server. Next, we need to configure the `docker.service` to only accept connections from clients that provide a trusted certificate, issued by your Certificate Authority. (CA).
 
 ---
 
