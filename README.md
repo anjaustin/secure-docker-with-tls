@@ -17,10 +17,10 @@ export DOCKER_HOST_IP="0.0.0.0"
 
 # Set the hostname of your docker host.
 # Include the subdomain if your docker host has one.
-# `DOCKER_HOST_FQDN="my-subdomain.$(hostname -f)"`
+# Do `export DOCKER_HOST_FQDN="my-subdomain.$(hostname -f)"`
 # if `hostname -f` doesn't include it.
-# Or, just type it in explicitly.
-# `DOCKER_HOST_FQDN="my-subdomain.my-hostname.my-tld"`
+# Or, just type it in explicitly and export it.
+# `export DOCKER_HOST_FQDN="my-subdomain.my-hostname.my-tld"`
 export DOCKER_HOST_FQDN="$(hostname -f)"
 
 # We'll need this to set up TLS for `docker.service`.
@@ -52,23 +52,27 @@ export DOCKER_TLS_VERIFY=1
 mkdir -v ~/.docker/tls/ && cd ~/.docker/tls/
 ```
 
-**2. Generate your private and public keys**
+**2. Generate your private and public keys.**
+
+Private key first.
 
 ```bash
 openssl genrsa -aes256 -out ca-key.pem 4096
 ```
 
-Then, enter a passphrase that will be used to encrypt the key, and enter it again to verify your input.
+Enter a pass phrase that will be used to encrypt the key, and enter it again to verify your input.
 
 ```bash
 Enter PEM pass phrase:
 Verifying - Enter PEM pass phrase:
 ```
 
-Next, create your public key.
+Now, the public key.
 
 ```bash
-openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
+openssl req -new -x509 -days 365 \
+-key ca-key.pem -sha256 \
+-out ca.pem
 ```
 
 Enter the pass phrase you used to generate your private key, and follow the prompts.
@@ -93,42 +97,46 @@ Email Address []: webmaster@acmeinc.com
 
 **4. Create a server key and certificate signing request (CSR) for the docker host machine.**
 
-Frist, the key...
+First, the server key.
 
 ```bash
 openssl genrsa -out server-key.pem 4096
 ```
 
-Now, the certificate signing request...
+And, the certificate signing request.
 
 ```bash
-openssl req -subj "/CN=$DOCKER_HOST_FQDN" -sha256 -new -key server-key.pem -out server.csr
+openssl req -subj "/CN=$DOCKER_HOST_FQDN" -sha256 -new \
+-key server-key.pem \
+-out server.csr
 ```
 
 **5. Sign the public key with our Certificate Authority.**
 
-Create the configuration file that will inform `opnessl` of the Subject Alt Name using the FQDN your certificate is for.
-
-For the top level domain set the FQDN and the IPs of the Docker host machine. *Replace the first IP address with the IP address of your host machine.*
+Create the configuration file that will inform `opnessl` of the Subject Alt Name.
 
 ```bash
 echo -e "subjectAltName=DNS:$CERT_SAN_CONFIGURATOIN" > server.cnf
 ```
 
-Next, set the Docker daemon key's extended usage attributes to be used only for server authentication.
+Next, set the extended usage attributes of the Docker daemon key to server auth only.
 
 ```bash
 echo extendedKeyUsage = serverAuth >> server.cnf
 ```
 
-Finally, generate the signed certificate...
+Generate the signed certificate.
 
 ```bash
-openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem \
--CAcreateserial -out server-cert.pem -extfile server.cnf
+openssl x509 -req -days 365 -sha256 \
+-in server.csr \
+-CA ca.pem \
+-CAkey ca-key.pem \
+-CAcreateserial -out server-cert.pem \
+-extfile server.cnf
 ```
 
-...and enter the same pass phrase you used at the start.
+Finally, enter the same pass phrase you used at the start.
 
 ```bash
 Signature ok
@@ -147,7 +155,7 @@ That takes care of the key and certificate signing request for the server.
 
 **1. Create the client key and certificate signing request.**
 
-First, the key...
+First, the client key.
 
 ```bash
 openssl genrsa -out key.pem 4096
@@ -168,8 +176,12 @@ echo extendedKeyUsage = clientAuth > client-auth.cnf
 **3. Generate the client's signed certificate.**
 
 ```bash
-openssl x509 -req -days 365 -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem \
--CAcreateserial -out cert.pem -extfile client-auth.cnf
+openssl x509 -req -days 365 -sha256 \
+-in client.csr \
+-CA ca.pem \
+-CAkey ca-key.pem \
+-CAcreateserial -out cert.pem \
+-extfile client-auth.cnf
 ```
 
 And enter your pass phrase.
@@ -183,10 +195,13 @@ Enter pass phrase for ca-key.pem:
 
 **4. Gabage colletion.**
 
-Once we've generated the `cert.pem` and `server-cert.pem` credentials, we can safely remove the certificate signing requests and `.cnf` files.
+Once we've generated the client's `cert.pem` and `server-cert.pem` credentials, we can safely remove the certificate signing requests and `.cnf` files.
 
 ```bash
-rm -v client.csr server.csr server.cnf client-auth.cnf
+rm -v client.csr \
+server.csr \
+server.cnf \
+client-auth.cnf
 ```
 
 **5. Setting permissions.**
@@ -298,7 +313,6 @@ docker --tlsverify \
 
 ```bash
 cp -v {ca,client-cert,client-key}.pem ~/.docker
-export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375 DOCKER_TLS_VERIFY=1
 ```
 
 ---
