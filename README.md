@@ -1,8 +1,8 @@
-# Securing the Docker Daemon with TLS
+# Securing the Docker daemon with TLS
 
 **Instructions for securing the Docker daemon with a self-signed certificate**
 
-*The following instructions are designed to be executed on the host machine of the docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation](https://docs.docker.com/engine/security/protect-access/): Protecting the Docker daemon socket.*
+*The following instructions are designed to be executed on the host machine of the Docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation](https://docs.docker.com/engine/security/protect-access/): Protecting the Docker daemon socket.*
 
 ## Create CA server and client keys with OpenSSL
 
@@ -187,7 +187,7 @@ Finally, we have all the necessary credentials for the server and clients that n
 
 **1. Configure `dockerd` for TLS using the server credentials you created earlier.**
 
-NOTE: I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your docker daemon over tls without this modifcation. Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will you to enable TLS for docker.
+NOTE: I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your Docker daemon over tls without this modifcation. Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will you to enable TLS for docker.
 
 First, create the override.conf file for the docker.service.
 
@@ -196,7 +196,7 @@ echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd" > override.conf
 cat override.conf # Make sure the `newlines` are actually newlines and not the ASCII characters. 
 ```
 
-Next, create the service directory to allow the docker daemon use your new configuration.
+Next, create the service directory to allow the Docker daemon use of your new configuration.
 
 ```bash
 sudo mkdir /etc/systemd/system/docker.service.d
