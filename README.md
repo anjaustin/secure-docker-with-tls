@@ -219,7 +219,7 @@ First, create the `override.conf` file for the `docker.service`.
 cat > ~/.docker/override.conf <<EOL
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375
 EOL
 ```
 
