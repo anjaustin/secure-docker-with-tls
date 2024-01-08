@@ -222,3 +222,5 @@ export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2376 DOCKER_TLS_VERIFY=1
 ### Other Connection Modalities
 
 You can read more about other options for connecting to a secure Docker daemon in the official  [Docker Documentation](https://docs.docker.com/engine/security/protect-access/#other-modes).
+
+---
