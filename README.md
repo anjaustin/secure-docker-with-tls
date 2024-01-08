@@ -6,13 +6,47 @@
 
 ## Create CA server and client keys with OpenSSL
 
-### First, let's create the key and certificate signing request (CSR) for the server.
+### First, let's initialize some variables that will make this process go a bit more smoothly.
+
+```bash
+# Change this to the IP address of your docker host
+export DOCKER_HOST_IP="0.0.0.0"
+
+# Set the hostname of your docker host.
+# Include the subdomain if your docker host has one.
+# `DOCKER_HOST_FQDN="my-subdomain.$(hostname -f)"`
+# if `hostname -f` doesn't include it.
+# Or, just type it in explicitly.
+# `DOCKER_HOST_FQDN="my-subdomain.my-hostname.my-tld"`
+export DOCKER_HOST_FQDN="$(hostname -f)"
+
+# We'll need this to set up TLS for `docker.service`.
+export DOCKER_SERVICE_DIR="/etc/systemd/system/docker.service.d"
+
+# A directory we will create to store the
+# Certificate Authority (CA) server credentials.
+export DOCKER_TLS_DIR="/etc/docker/.tls"
+
+# The `subjectAltName` for your CA credentials
+export CERT_SAN_CONFIGURATOIN="$DOCKER_HOST_FQDN,IP:$DOCKER_HOST_IP,IP:127.0.0.1"
+
+# Set the docker host
+export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375
+
+# And finally, set `tlsverify` to `true`
+# Set this to `0` if for any reason you need to disable `tlsverify`.
+# For instance, if find yourself in a position at the end of this
+# process in which you need access the Docker daemon (docker.service)
+# without TLS.
+export DOCKER_TLS_VERIFY=1
+```
+
+### Now, let's create the key and certificate signing request (CSR) for the server.
 
 **1. Create and enter the working directory for the creation of your credentials.**
 
 ```bash
-mkdir ~/.docker/tls/ && \
-cd ~/.docker/tls/
+mkdir -v ~/.docker/tls/ && cd ~/.docker/tls/
 ```
 
 **2. Generate your private and public keys**
@@ -65,13 +99,7 @@ openssl genrsa -out server-key.pem 4096
 Now, the certificate signing request...
 
 ```bash
-openssl req -subj "/CN=$(hostname -f)" -sha256 -new -key server-key.pem -out server.csr
-```
-
-Or, if you need to specify a subdomain...
-
-```bash
-openssl req -subj "/CN=my-subdomain.$(hostname -f)" -sha256 -new -key server-key.pem -out server.csr
+openssl req -subj "/CN=$DOCKER_HOST_FQDN" -sha256 -new -key server-key.pem -out server.csr
 ```
 
 **5. Sign the public key with our Certificate Authority.**
@@ -81,13 +109,7 @@ Create the configuration file that will inform `opnessl` of the Subject Alt Name
 For the top level domain set the FQDN and the IPs of the Docker host machine. *Replace the first IP address with the IP address of your host machine.*
 
 ```bash
-echo -e "subjectAltName=DNS:$(hostname -f),IP:10.8.16.32,IP:127.0.0.1" > server.cnf
-```
-
-Or, if you need to use a subdomain...
-
-```bash
-echo -e "subjectAltName=DNS:my-hostname.$(hostname -f),IP:10.8.16.32,IP:127.0.0.1" > server.cnf
+echo -e "subjectAltName=DNS:$CERT_SAN_CONFIGURATOIN" > server.cnf
 ```
 
 Next, set the Docker daemon key's extended usage attributes to be used only for server authentication.
@@ -118,7 +140,7 @@ That takes care of the key and certificate signing request for the server.
 
 ### Now, let's create the key and certificate signing request (CSR) for the client.
 
-*Again, the following instructions are designed to be executed on the host machine of the Docker daemon. We continue the following instructions in the same working directory as before, `~/.docker/tls`*
+*Again, the following instructions are designed to be executed on the host machine of the Docker daemon. We continue the following instructions in the same working directory as before,* `~/.docker/tls`*.*
 
 **1. Create the client key and certificate signing request.**
 
@@ -187,46 +209,75 @@ Finally, we have all the necessary credentials for the server and clients that n
 
 **1. Configure `dockerd` for TLS using the server credentials you created earlier.**
 
-NOTE: I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your Docker daemon over tls without this modifcation. Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will you to enable TLS for docker.
+NOTE: I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your Docker daemon over TLS without this modifcation.
 
-First, create the override.conf file for the docker.service.
+Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will you to enable TLS for the Docker daemon.
+
+First, create the `override.conf` file for the `docker.service`.
 
 ```bash
-echo -e "[Service]\nExecStart=\nExecStart=/usr/bin/dockerd" > override.conf
-cat override.conf # Make sure the `newlines` are actually newlines and not the ASCII characters. 
+cat > ~/.docker/override.conf <<EOL
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd
+EOL
 ```
 
 Next, create the service directory to allow the Docker daemon use of your new configuration.
 
 ```bash
-sudo mkdir /etc/systemd/system/docker.service.d
+sudo mkdir -v /etc/systemd/system/docker.service.d
 ```
 
 If you get the following warning then the directory already exists. So, all we need to do next is copy the new configuration file to that directory, reload the systemd daemon, and restart the Docker daemon.
 
-```bash
+```warning
 mkdir: cannot create directory ‘/etc/systemd/system/docker.service.d’: File exists
 ```
 
-Now, copy the `override.conf` file to the docker service directory, reload the systemd daemon, and restart the Docker daemon.
+Now, copy the `override.conf` file to the docker service directory and reload the system daemon.
 
 ```bash
 sudo cp -v override.conf /etc/systemd/system/docker.service.d/
 sudo systemctl daemon-reload
+```
+
+Later, we will restart the `docker.service`. Before we do that, we need to make the server credentials available to the Docker daemon. 
+
+**2. Create a directory for the credentials for the server and copy the credentials into the new directory.**
+
+```bash
+cd ~/.docker/tls
+sudo mkdir -v /etc/docker/.tls
+sudo cp -v {ca,server-cert,server-key}.pem /etc/docker/.tls/
+```
+
+Now that the credentials are in place, we need to create the `daemon.json` for the `docker.service`.
+
+**NOTE:** *If the* `/etc/docker/daemon.json` *already exists, then do not run the following* `cat` *command. Simply open your existing* `/etc/docker/daemon.json` *in your preferred editor and add the following* `json` *data to your existing* `/etc/docker/daemon.json`*.* 
+
+```bash
+cat > ~/.docker/daemon.json <<EOL
+{
+  "tlsverify": true,
+  "tlscacert": "/etc/docker/.tls/ca.pem",
+  "tlscert": "/etc/docker/.tls/server-cert.pem",
+  "tlskey": "/etc/docker/.tls/server-key.pem"
+}
+EOL
+```
+
+Now, we can reload the system daemon and restart `docker.service`.
+
+```bash
 sudo systemctl restart docker
 ```
 
+Next, copy your client credentials to your `~/.docker/` directory.
 
 ```bash
-dockerd \
---tlsverify \
---tlscacert=ca.pem \
---tlscert=server-cert.pem \
---tlskey=server-key.pem \
--H=0.0.0.0:2375 version
+cp -v {ca,cert,key}.pem ~/.docker
 ```
-
-**2. Test the connection with the client credentials you just created.**
 
 *Replace `[HOST]` with the FQDN of your docker server as set in the server credentials you created earlier.*
 
