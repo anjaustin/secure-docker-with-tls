@@ -2,7 +2,7 @@
 
 **Instructions for securing the Docker daemon with a self-signed certificate**
 
-*The following instructions are designed to be executed on the host machine of the docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation](https://docs.docker.com/engine/security/protect-access/) on protecting the Docker daemon socket.*
+*The following instructions are designed to be executed on the host machine of the docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation](https://docs.docker.com/engine/security/protect-access/): Protecting the Docker daemon socket.*
 
 ## Create CA server and client keys with OpenSSL
 
@@ -78,16 +78,16 @@ openssl req -subj "/CN=my-subdomain.$(hostname -f)" -sha256 -new -key server-key
 
 Create the configuration file that will inform `opnessl` of the Subject Alt Name using the FQDN your certificate is for.
 
-For the top level domain...
+For the top level domain set the FQDN and the IPs of the Docker host machine. *Replace the first IP address with the IP address of your host machine.*
 
 ```bash
-echo -e "subjectAltName=DNS:$(hostname -f),IP:10.64.32.16,IP:120.0.0.1" > server.cnf
+echo -e "subjectAltName=DNS:$(hostname -f),IP:10.8.16.32,IP:120.0.0.1" > server.cnf
 ```
 
 Or, if you need to use a subdomain...
 
 ```bash
-echo -e "subjectAltName=DNS:my-hostname.$(hostname -f),IP:10.64.32.16,IP:120.0.0.1" > server.cnf
+echo -e "subjectAltName=DNS:my-hostname.$(hostname -f),IP:10.8.16.32,IP:120.0.0.1" > server.cnf
 ```
 
 Next, set the Docker daemon key's extended usage attributes to be used only for server authentication.
@@ -205,8 +205,8 @@ export DOCKER_HOST_FQDN=[HOST]
 
 docker --tlsverify \
 --tlscacert=ca.pem \
---tlscert=cert.pem \
---tlskey=key.pem \
+--tlscert=client-cert.pem \
+--tlskey=client-key.pem \
 -H=$DOCKER_HOST_FQDN:2376 version
 ```
 
