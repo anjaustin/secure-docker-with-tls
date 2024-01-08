@@ -291,11 +291,7 @@ Now, we can reload the system daemon and restart `docker.service`.
 sudo systemctl restart docker
 ```
 
-Next, copy your client credentials to your `~/.docker/` directory and test your connection with TLS.
-
-```bash
-cp -v {ca,cert,key}.pem ~/.docker
-```
+Next, from your `~/.docker/tls` directory, test your connection with TLS.
 
 ```bash
 docker --tlsverify \
@@ -337,7 +333,7 @@ Server: Docker Engine - Community
   GitCommit:        de40ad0
 ```
 
-**3. Now, we can secure the connection by default.**
+**3. Finally, we can secure the connection by default.**
 
 Copy your credentials to your `/home/.docker` directory.
 
@@ -348,12 +344,16 @@ cp -v {ca,cert,key}.pem ~/.docker
 After which, you can simply do the following.
 
 ```bash
-docker version
+docker version # If this works, you're in the crypto!
 ```
 
 For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory and their good as gold!
 
-Enjoy your TLS-secured Docker server!
+**4. Live long, and Docker!**
+
+![Live long, and Docker!](https://media1.tenor.com/m/A3s-Mk6G2-kAAAAC/star-trek-spock.gif)
+
+
 
 ---
 
