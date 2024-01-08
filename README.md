@@ -2,7 +2,7 @@
 
 **Instructions for securing the Docker daemon with a self-signed certificate**
 
-*The following instructions are designed to be executed on the host machine of the docker daemon.*
+*The following instructions are designed to be executed on the host machine of the docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation](https://docs.docker.com/engine/security/protect-access/) on protecting the Docker daemon socket.*
 
 ## Create CA server and client keys with OpenSSL
 
