@@ -347,7 +347,7 @@ After which, you can simply do the following.
 docker version # If this works, you're in the crypto!
 ```
 
-For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory and their good as gold!
+For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory and they're good as gold!
 
 **4. Live long, and Docker!**
 
