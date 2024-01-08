@@ -213,13 +213,13 @@ For your eyes only. 👀
 chmod -v 0400 ca-key.pem key.pem server-key.pem
 ```
 
-For the world to see, but not to change...
+For the world to see, but not to change.
 
 ```bash
 chmod -v 0444 ca.pem server-cert.pem cert.pem
 ```
 
-Finally, we have all the necessary credentials for the server and clients that need to connect to the server. Next, we need to configure the Docker daemon, `dockerd`, to only accept connections from clients that provide a trusted certificate, issued by your Certificate Authority. (CA).
+Finally, we have all the necessary credentials for the server and clients that need to connect to the server. Next, we need to configure the Docker daemon (docker.service), to only accept connections from clients that provide a trusted certificate, issued by your Certificate Authority. (CA).
 
 ---
 
