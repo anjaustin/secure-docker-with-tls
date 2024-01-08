@@ -81,13 +81,13 @@ Create the configuration file that will inform `opnessl` of the Subject Alt Name
 For the top level domain set the FQDN and the IPs of the Docker host machine. *Replace the first IP address with the IP address of your host machine.*
 
 ```bash
-echo -e "subjectAltName=DNS:$(hostname -f),IP:10.8.16.32,IP:120.0.0.1" > server.cnf
+echo -e "subjectAltName=DNS:$(hostname -f),IP:10.8.16.32,IP:127.0.0.1" > server.cnf
 ```
 
 Or, if you need to use a subdomain...
 
 ```bash
-echo -e "subjectAltName=DNS:my-hostname.$(hostname -f),IP:10.8.16.32,IP:120.0.0.1" > server.cnf
+echo -e "subjectAltName=DNS:my-hostname.$(hostname -f),IP:10.8.16.32,IP:127.0.0.1" > server.cnf
 ```
 
 Next, set the Docker daemon key's extended usage attributes to be used only for server authentication.
@@ -125,13 +125,13 @@ That takes care of the key and certificate signing request for the server.
 First, the key...
 
 ```bash
-openssl genrsa -out client-key.pem 4096
+openssl genrsa -out key.pem 4096
 ```
 
 Then, create the client's certificate signing request.
 
 ```bash
-openssl req -subj '/CN=client' -new -key client-key.pem -out client.csr
+openssl req -subj '/CN=client' -new -key key.pem -out client.csr
 ```
 
 **2. Set the key for client authentication.**
@@ -144,7 +144,7 @@ echo extendedKeyUsage = clientAuth > client-auth.cnf
 
 ```bash
 openssl x509 -req -days 365 -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem \
--CAcreateserial -out client-cert.pem -extfile client-auth.cnf
+-CAcreateserial -out cert.pem -extfile client-auth.cnf
 ```
 
 And enter your pass phrase.
@@ -158,7 +158,7 @@ Enter pass phrase for ca-key.pem:
 
 **4. Gabage colletion.**
 
-Once we've generated the `client-cert.pem` and `server-cert.pem` credentials, we can safely remove the certificate signing requests and `.cnf` files.
+Once we've generated the `cert.pem` and `server-cert.pem` credentials, we can safely remove the certificate signing requests and `.cnf` files.
 
 ```bash
 rm -v client.csr server.csr server.cnf client-auth.cnf
@@ -170,13 +170,13 @@ If the `umask` of the machine you're using to create the credentials is set to 0
 For your eyes only...
 
 ```bash
-chmod -v 0400 ca-key.pem client-key.pem server-key.pem
+chmod -v 0400 ca-key.pem key.pem server-key.pem
 ```
 
 For the world to see, but not to change...
 
 ```bash
-chmod -v 0444 ca.pem server-cert.pem client-cert.pem
+chmod -v 0444 ca.pem server-cert.pem cert.pem
 ```
 
 Finally, we have all the necessary credentials for the server and clients that need to connect to the server. Next, we need to configure the Docker daemon, `dockerd`, to only accept connections from clients that provide a trusted certificate, issued by your Certificate Authority. (CA).
@@ -193,7 +193,7 @@ dockerd \
 --tlscacert=ca.pem \
 --tlscert=server-cert.pem \
 --tlskey=server-key.pem \
--H=0.0.0.0:2376
+-H=0.0.0.0:2375 version
 ```
 
 **2. Test the connection with the client credentials you just created.**
@@ -207,14 +207,14 @@ docker --tlsverify \
 --tlscacert=ca.pem \
 --tlscert=client-cert.pem \
 --tlskey=client-key.pem \
--H=$DOCKER_HOST_FQDN:2376 version
+-H=$DOCKER_HOST_FQDN:2375 version
 ```
 
 **3. Secure the connection by default.**
 
 ```bash
 cp -v {ca,client-cert,client-key}.pem ~/.docker
-export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2376 DOCKER_TLS_VERIFY=1
+export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375 DOCKER_TLS_VERIFY=1
 ```
 
 ---
