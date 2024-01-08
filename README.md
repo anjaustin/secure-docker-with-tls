@@ -291,29 +291,69 @@ Now, we can reload the system daemon and restart `docker.service`.
 sudo systemctl restart docker
 ```
 
-Next, copy your client credentials to your `~/.docker/` directory.
+Next, copy your client credentials to your `~/.docker/` directory and test your connection with TLS.
 
 ```bash
 cp -v {ca,cert,key}.pem ~/.docker
 ```
 
-*Replace `[HOST]` with the FQDN of your docker server as set in the server credentials you created earlier.*
-
 ```bash
-export DOCKER_HOST_FQDN=[HOST]
-
 docker --tlsverify \
 --tlscacert=ca.pem \
---tlscert=client-cert.pem \
---tlskey=client-key.pem \
+--tlscert=cert.pem \
+--tlskey=key.pem \
 -H=$DOCKER_HOST_FQDN:2375 version
 ```
 
-**3. Secure the connection by default.**
+A successful test of your credentials should produce the following or something like it.
 
 ```bash
-cp -v {ca,client-cert,client-key}.pem ~/.docker
+Client: Docker Engine - Community
+ Version:           24.0.7
+ API version:       1.43
+ Go version:        go1.20.10
+ Git commit:        afdd53b
+ Built:             Thu Oct 26 09:07:41 2023
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          24.0.7
+  API version:      1.43 (minimum version 1.12)
+  Go version:       go1.20.10
+  Git commit:       311b9ff
+  Built:            Thu Oct 26 09:07:41 2023
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.6.26
+  GitCommit:        3dd1e886e55dd695541fdcd67420c2888645a495
+ runc:
+  Version:          1.1.10
+  GitCommit:        v1.1.10-0-g18a0cb0
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
 ```
+
+**3. Now, we can secure the connection by default.**
+
+Copy your credentials to your `/home/.docker` directory.
+
+```bash
+cp -v {ca,cert,key}.pem ~/.docker
+```
+
+After which, you can simply do the following.
+
+```bash
+docker version
+```
+
+For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory and their good as gold!
+
+Enjoy your TLS-secured Docker server!
 
 ---
 
