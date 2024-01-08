@@ -225,7 +225,7 @@ Finally, we have all the necessary credentials for the server and clients that n
 
 ## Secure Docker with TLS verification
 
-**1. Configure `dockerd` for TLS using the server credentials you created earlier.**
+**1. Configure `docker.service` for TLS using the server credentials you created earlier.**
 
 NOTE: I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your Docker daemon over TLS without this modifcation.
 
