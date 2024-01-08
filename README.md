@@ -198,7 +198,7 @@ dockerd \
 
 **2. Test the connection with the client credentials you just created.**
 
-*Replace [HOST] with the FQDN of your docker server as set in the server credentials you created earlier.*
+*Replace `[HOST]` with the FQDN of your docker server as set in the server credentials you created earlier.*
 
 ```bash
 export DOCKER_HOST_FQDN=[HOST]
