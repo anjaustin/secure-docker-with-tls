@@ -227,7 +227,7 @@ Finally, we have all the necessary credentials for the server and clients that n
 
 **1. Configure `docker.service` for TLS using the server credentials you created earlier.**
 
-NOTE: *I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your* `docker.service` *over TLS without this modifcation.*
+**NOTE:** *I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your* `docker.service` *over TLS without this modifcation.*
 
 Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will you to enable TLS for the Docker daemon.
 
