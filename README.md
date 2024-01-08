@@ -4,8 +4,7 @@
 
 *The following instructions are designed to be executed on the host machine of the Docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation: Protecting the Docker daemon socket.](https://docs.docker.com/engine/security/protect-access/)*
 
-*StackOverflow was also instrumental in helping me to resolve some of the issues absent in the official Docker docs.
-[StackOverflow: Unable to start docker after configuring hosts in daemon.json](https://stackoverflow.com/questions/44052054/unable-to-start-docker-after-configuring-hosts-in-daemon-json)*
+*StackOverflow was also instrumental in helping me to resolve some obscurities in the official Docker docs. [StackOverflow: Unable to start docker after configuring hosts in daemon.json](https://stackoverflow.com/questions/44052054/unable-to-start-docker-after-configuring-hosts-in-daemon-json)*
 
 ## Create CA server and client keys with OpenSSL
 
