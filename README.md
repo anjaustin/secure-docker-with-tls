@@ -354,7 +354,7 @@ After which, you can do the following.
 docker version # If this works, you're in the crypto!
 ```
 
-**4. Add the environment variables to your `~/.docker/` directory and `~/.profile`.**
+**4. Add the environment variables to your `~/.docker` directory and `~/.profile`. **
 
 You TLS works now because the environment variables are still in memory, while will be flushed upon reboot. We can resolve this by creating a `.env_docker` file and loading it at login.
 
