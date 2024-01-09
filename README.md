@@ -37,7 +37,7 @@ export DOCKER_TLS_DIR="/etc/docker/.tls"
 export CERT_SAN_CONFIGURATION="$DOCKER_HOST_FQDN,IP:$DOCKER_HOST_IP,IP:127.0.0.1"
 
 # Set the docker host.
-export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375
+export DOCKER_HOST="tcp://$DOCKER_HOST_FQDN:2375"
 
 # And finally, set `tlsverify` to `true`.
 # Set this to `0` if you need to disable `tlsverify`.
@@ -353,6 +353,36 @@ After which, you can do the following.
 ```bash
 docker version # If this works, you're in the crypto!
 ```
+
+**4. Add the environment variables to your `/home` directory and `.profile`.**
+
+You TLS works now because the environment variables are still in memory, while will be flushed upon reboot. We can resolve this by creating a `.env_docker` file and loading it on reboot and login.
+
+Create the `.env_docker` file and load it with the necessary environment variables.
+
+```bash
+cat > ~/.docker/.env_docker <<EOL
+export DOCKER_HOST_IP="$DOCKER_HOST_IP"
+export DOCKER_HOST="tcp://$DOCKER_HOST_FQDN:2375"
+export DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY
+EOL
+```
+
+Update your `.profile` to load the environment variables from `~/.env_docker`. We'll start with a blank new line so the new bash code isn't bunched up against the existing bash in the file.
+
+```bash
+cat >> ~/.profile <<'EOL'
+
+# Load Docker TLS environment variables if '.env_docker' exists
+if [ -f "$HOME/.docker/.env_docker" ]; then
+    export $(cat $HOME/.docker/.env_docker | xargs)
+fi
+EOL
+```
+
+A quick reboot and you're ready to test your new environment.
+
+**5. Endowing additional users with TLS for the secured Docker daemon socket.**
 
 For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory, and they're good as gold!
 
