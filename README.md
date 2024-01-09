@@ -2,7 +2,7 @@
 
 ![Secure Docker with TLS](./assets/images/secure-docker-with-tls.png)
 
-**Instructions for securing the Docker daemon with a self-signed certificate**
+**Securing the Docker daemon socket with a self-signed certificate.**
 
 *The following instructions should be executed on the host machine of the Docker daemon you wish to secure. With some modification, the following instructions were sourced from the official [Docker Documentation: Protecting the Docker daemon socket.](https://docs.docker.com/engine/security/protect-access/)*
 
