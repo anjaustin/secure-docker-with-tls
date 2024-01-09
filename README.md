@@ -4,7 +4,7 @@
 
 **Instructions for securing the Docker daemon with a self-signed certificate**
 
-*The following instructions are designed to be executed on the host machine of the Docker daemon. With some modification, the following instructions were sourced from the official [Docker Documentation: Protecting the Docker daemon socket.](https://docs.docker.com/engine/security/protect-access/)*
+*The following instructions should be executed on the host machine of the Docker daemon you wish to secure. With some modification, the following instructions were sourced from the official [Docker Documentation: Protecting the Docker daemon socket.](https://docs.docker.com/engine/security/protect-access/)*
 
 *StackOverflow was also instrumental in helping me resolve some obscurities in the official Docker docs. [StackOverflow: Unable to start docker after configuring hosts in daemon.json](https://stackoverflow.com/questions/44052054/unable-to-start-docker-after-configuring-hosts-in-daemon-json)*
 
@@ -43,7 +43,8 @@ export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375
 # Set this to `0` if you need to disable `tlsverify`.
 # For instance, if find yourself in a position at the end of this
 # process in which you need access to the Docker daemon (docker.service)
-# without TLS. This will allow you to use TLS by default.
+# without TLS, setting this to `0` will allow you to access the service.
+# Otherwise, `1` defaults to TLS.
 export DOCKER_TLS_VERIFY=1
 ```
 
@@ -122,7 +123,7 @@ Create the configuration file that will inform `opnessl` of the Subject Alt Name
 echo -e "subjectAltName=DNS:$CERT_SAN_CONFIGURATION" > server.cnf
 ```
 
-Next, set the extended usage attributes of the Docker daemon key to server auth only.
+Next, set the extended usage attribute of this key to server auth only.
 
 ```bash
 echo extendedKeyUsage = serverAuth >> server.cnf
@@ -154,7 +155,7 @@ That takes care of the key and certificate signing request for the server.
 
 ### Now, let's create the client's key and certificate signing request (CSR).
 
-*Again, the following instructions are designed to be executed on the host machine of the Docker daemon. We continue the following instructions in the same working directory as before,* `~/.docker/tls`*.*
+*Again, the following instructions should be executed on the host machine of the Docker daemon you wish to secure with TLS. We continue the following instructions in the same working directory as before,* `~/.docker/tls`*.*
 
 **1. Create the client key and certificate signing request.**
 
@@ -247,7 +248,7 @@ ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375
 EOL
 ```
 
-Next, create the service directory to allow the `docker.service` to use your new configuration.
+Next, create the service directory for the `override.conf` file.
 
 ```bash
 sudo mkdir -v /etc/systemd/system/docker.service.d
@@ -259,7 +260,7 @@ If you get the following warning, then the directory already exists. At which po
 mkdir: cannot create directory ‘/etc/systemd/system/docker.service.d’: File exists
 ```
 
-Now, copy the `override.conf` file to the docker service directory and reload the system daemon.
+Copy the `override.conf` file to the docker service directory and reload the system daemon.
 
 ```bash
 sudo cp -v override.conf /etc/systemd/system/docker.service.d/
@@ -271,7 +272,7 @@ Before we restart the `docker.service`, we need to make the server credentials a
 **2. Create a directory for the server's credentials and copy the credentials into the new directory.**
 
 ```bash
-cd ~/.docker/tls
+cd ~/.docker/tls # ...just to be sure. :)
 sudo mkdir -v /etc/docker/.tls
 sudo cp -v {ca,server-cert,server-key}.pem /etc/docker/.tls/
 ```
