@@ -1,6 +1,6 @@
 # Securing the Docker daemon with TLS
 
-![Secure Docker with TLS](secure-docker-with-tls.png)
+![Secure Docker with TLS](./assets/images/secure-docker-with-tls.png)
 
 **Instructions for securing the Docker daemon with a self-signed certificate**
 
