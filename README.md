@@ -354,9 +354,9 @@ After which, you can do the following.
 docker version # If this works, you're in the crypto!
 ```
 
-**4. Add the environment variables to your `/home` directory and `.profile`.**
+**4. Add the environment variables to your `~/.docker/` directory and `~/.profile`.**
 
-You TLS works now because the environment variables are still in memory, while will be flushed upon reboot. We can resolve this by creating a `.env_docker` file and loading it on reboot and login.
+You TLS works now because the environment variables are still in memory, while will be flushed upon reboot. We can resolve this by creating a `.env_docker` file and loading it at login.
 
 Create the `.env_docker` file and load it with the necessary environment variables.
 
@@ -367,7 +367,7 @@ DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY
 EOL
 ```
 
-Update your `.profile` to load the environment variables from `~/.env_docker`. We'll start with a blank new line so the new bash code isn't bunched up against the existing bash in the file.
+Update your `.profile` to load the environment variables from `~/.docker/.env_docker`. We'll start with a blank new line so the new bash code isn't bunched up against the existing bash in the file.
 
 ```bash
 cat >> ~/.profile <<'EOL'
@@ -383,7 +383,7 @@ A quick reboot and you're ready to test your new environment.
 
 **5. Endowing additional users with TLS for the secured Docker daemon socket.**
 
-For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory, and they're good as gold!
+For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory, update their `~/.profile` to load the `~/.docker/.env_docker`, and they're good as gold!
 
 **Live long, and Docker!**
 
@@ -393,6 +393,6 @@ For any client that needs to connect to your newly secured Docker daemon socket,
 
 ### Other Connection Modalities
 
-You can read more about other options for connecting to a secure Docker daemon in the official  [Docker Documentation](https://docs.docker.com/engine/security/protect-access/#other-modes).
+You can read more about other options for connecting to a secure Docker daemon in the official [Docker Documentation](https://docs.docker.com/engine/security/protect-access/#other-modes).
 
 ---
