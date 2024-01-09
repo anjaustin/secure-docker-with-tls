@@ -362,9 +362,8 @@ Create the `.env_docker` file and load it with the necessary environment variabl
 
 ```bash
 cat > ~/.docker/.env_docker <<EOL
-export DOCKER_HOST_IP="$DOCKER_HOST_IP"
-export DOCKER_HOST="tcp://$DOCKER_HOST_FQDN:2375"
-export DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY
+DOCKER_HOST="tcp://$DOCKER_HOST_FQDN:2375"
+DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY
 EOL
 ```
 
