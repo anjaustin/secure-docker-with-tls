@@ -266,7 +266,7 @@ sudo cp -v override.conf /etc/systemd/system/docker.service.d/
 sudo systemctl daemon-reload
 ```
 
-Later, we will restart the `docker.service`. Before we do that, we need to make the server credentials available to the `docker.service`. 
+Before we restart the `docker.service`, we need to make the server credentials available to the `docker.service`. 
 
 **2. Create a directory for the server's credentials and copy the credentials into the new directory.**
 
