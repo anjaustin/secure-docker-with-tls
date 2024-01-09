@@ -2,13 +2,13 @@
 
 **Instructions for securing the Docker daemon with a self-signed certificate**
 
-*The following instructions are designed to be executed on the host machine of the Docker daemon. With some modification, these insturctions were sourced from the official [Docker Documentation: Protecting the Docker daemon socket.](https://docs.docker.com/engine/security/protect-access/)*
+*The following instructions are designed to be executed on the host machine of the Docker daemon. With some modification, the following instructions were sourced from the official [Docker Documentation: Protecting the Docker daemon socket.](https://docs.docker.com/engine/security/protect-access/)*
 
-*StackOverflow was also instrumental in helping me to resolve some obscurities in the official Docker docs. [StackOverflow: Unable to start docker after configuring hosts in daemon.json](https://stackoverflow.com/questions/44052054/unable-to-start-docker-after-configuring-hosts-in-daemon-json)*
+*StackOverflow was also instrumental in helping me resolve some obscurities in the official Docker docs. [StackOverflow: Unable to start docker after configuring hosts in daemon.json](https://stackoverflow.com/questions/44052054/unable-to-start-docker-after-configuring-hosts-in-daemon-json)*
 
-## Create CA server and client keys with OpenSSL
+## Create CA server and client credentials with OpenSSL
 
-### First, let's initialize some variables that will make this process go a bit more smoothly.
+### Let us initialize some variables.
 
 ```bash
 # Change this to the IP address of your docker host
@@ -16,34 +16,36 @@ export DOCKER_HOST_IP="0.0.0.0"
 
 # Set the hostname of your docker host.
 # Include the subdomain if your docker host has one.
-# Do `export DOCKER_HOST_FQDN="my-subdomain.$(hostname -f)"`
+# Do `export DOCKER_HOST_FQDN="my-subdomain.$(hostname -f)"`,
 # if `hostname -f` doesn't include it.
 # Or, just type it in explicitly and export it.
-# `export DOCKER_HOST_FQDN="my-subdomain.my-hostname.my-tld"`
+# `export DOCKER_HOST_FQDN="subdomain.domain-name.com"`
 export DOCKER_HOST_FQDN="$(hostname -f)"
 
-# We'll need this to set up TLS for `docker.service`.
+# We'll need this to set up TLS for the `docker.service`.
 export DOCKER_SERVICE_DIR="/etc/systemd/system/docker.service.d"
 
-# A directory we will create to store the
-# Certificate Authority (CA) server credentials.
+# A directory for our Certificate Authority (CA)
+# server credentials.
 export DOCKER_TLS_DIR="/etc/docker/.tls"
 
-# The `subjectAltName` for your CA credentials
+# The `subjectAltName` for your CA credentials. # If the IP
+# address of your host machine changes you'll need to recreate
+# and reinstall your server credentials.
 export CERT_SAN_CONFIGURATOIN="$DOCKER_HOST_FQDN,IP:$DOCKER_HOST_IP,IP:127.0.0.1"
 
-# Set the docker host
+# Set the docker host.
 export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375
 
-# And finally, set `tlsverify` to `true`
-# Set this to `0` if for any reason you need to disable `tlsverify`.
+# And finally, set `tlsverify` to `true`.
+# Set this to `0` if you need to disable `tlsverify`.
 # For instance, if find yourself in a position at the end of this
-# process in which you need access the Docker daemon (docker.service)
-# without TLS.
+# process in which you need access to the Docker daemon (docker.service)
+# without TLS. This will allow you to use TLS by default.
 export DOCKER_TLS_VERIFY=1
 ```
 
-### Now, let's create the key and certificate signing request (CSR) for the server.
+### Now, let's create the server's key and certificate signing request (CSR).
 
 **1. Create and enter the working directory for the creation of your credentials.**
 
@@ -59,7 +61,7 @@ Private key first.
 openssl genrsa -aes256 -out ca-key.pem 4096
 ```
 
-Enter a pass phrase that will be used to encrypt the key, and enter it again to verify your input.
+Enter a passphrase with which to encrypt the key, and enter it again to verify your passphrase.
 
 ```bash
 Enter PEM pass phrase:
@@ -74,18 +76,18 @@ openssl req -new -x509 -days 365 \
 -out ca.pem
 ```
 
-Enter the pass phrase you used to generate your private key, and follow the prompts.
+Enter the passphrase you used to generate your private key and follow the prompts.
 
 ```bash
 Enter pass phrase for ca-key.pem:
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
-There are quite a few fields but you can leave some blank
-For some fields there will be a default value,
+There are quite a few fields, but you can leave some blank
+For some fields, there will be a default value,
 If you enter '.', the field will be left blank.
 -----
-Country Name (2 letter code) [AU]: US
+Country Name (2-letter code) [AU]: US
 State or Province Name (full name) [Some-State]: Virginia
 Locality Name (eg, city) []: Alexandria
 Organization Name (eg, company) [Internet Widgits Pty Ltd]: ACME, Inc.
@@ -102,7 +104,7 @@ First, the server key.
 openssl genrsa -out server-key.pem 4096
 ```
 
-And, the certificate signing request.
+And, the certificate signing request (CSR).
 
 ```bash
 openssl req -subj "/CN=$DOCKER_HOST_FQDN" -sha256 -new \
@@ -112,7 +114,7 @@ openssl req -subj "/CN=$DOCKER_HOST_FQDN" -sha256 -new \
 
 **5. Sign the public key with our Certificate Authority.**
 
-Create the configuration file that will inform `opnessl` of the Subject Alt Name.
+Create the configuration file that will inform `opnessl` of the Subject Alt Name (SAN).
 
 ```bash
 echo -e "subjectAltName=DNS:$CERT_SAN_CONFIGURATOIN" > server.cnf
@@ -135,7 +137,7 @@ openssl x509 -req -days 365 -sha256 \
 -extfile server.cnf
 ```
 
-Finally, enter the same pass phrase you used at the start.
+Finally, enter the same passphrase you used at the start.
 
 ```bash
 Signature ok
@@ -148,7 +150,7 @@ That takes care of the key and certificate signing request for the server.
 
 ---
 
-### Now, let's create the key and certificate signing request (CSR) for the client.
+### Now, let's create the client's key and certificate signing request (CSR).
 
 *Again, the following instructions are designed to be executed on the host machine of the Docker daemon. We continue the following instructions in the same working directory as before,* `~/.docker/tls`*.*
 
@@ -163,7 +165,9 @@ openssl genrsa -out key.pem 4096
 Then, the client's certificate signing request.
 
 ```bash
-openssl req -subj '/CN=client' -new -key key.pem -out client.csr
+openssl req -subj '/CN=client' -new \
+-key key.pem \
+-out client.csr
 ```
 
 **2. Set the key for client authentication.**
@@ -183,7 +187,7 @@ openssl x509 -req -days 365 -sha256 \
 -extfile client-auth.cnf
 ```
 
-And enter your pass phrase.
+Enter your passphrase.
 
 ```bash
 Signature ok
@@ -192,9 +196,9 @@ Getting CA Private Key
 Enter pass phrase for ca-key.pem:
 ```
 
-**4. Gabage colletion.**
+**4. Garbage collection.**
 
-Once we've generated the client's `cert.pem` and `server-cert.pem` credentials, we can safely remove the certificate signing requests and `.cnf` files.
+Once we've generated the client's `cert.pem` and the `server-cert.pem` credentials, we can safely remove the certificate signing requests and `.cnf` files.
 
 ```bash
 rm -v client.csr \
@@ -205,21 +209,21 @@ client-auth.cnf
 
 **5. Setting permissions.**
 
-If the `umask` of the machine you're using to create the credentials is set to 022, your secret keys are world-readable and writable for you and your group. You can learn more about setting your `umask` [here](https://www.linuxnix.com/umask-define-linuxunix/). Let's protect our credentials from accidental corruption by setting the proper permissions.
+If the `umask` of the machine you're using is set to `022`, your secret keys are world-readable and writable for you and your group. You can learn more about setting your system's `umask` [here](https://www.linuxnix.com/umask-define-linuxunix/). Let's protect our credentials from accidental corruption by setting the proper permissions.
 
-For your eyes only. 👀
+👀 For your eyes only.
 
 ```bash
 chmod -v 0400 ca-key.pem key.pem server-key.pem
 ```
 
-For the world to see, but not to change.
+For the world to see, not to change.
 
 ```bash
 chmod -v 0444 ca.pem server-cert.pem cert.pem
 ```
 
-Finally, we have all the necessary credentials for the server and clients that need to connect to the server. Next, we need to configure the `docker.service` to only accept connections from clients that provide a trusted certificate, issued by your Certificate Authority. (CA).
+Finally, we have all the required credentials for the server and for clients that need to connect to the server. Next, we need to configure the `docker.service` to accept connections from clients that provide a trusted certificate issued by your Certificate Authority (CA). You.
 
 ---
 
@@ -227,9 +231,9 @@ Finally, we have all the necessary credentials for the server and clients that n
 
 **1. Configure `docker.service` for TLS using the server credentials you created earlier.**
 
-**NOTE:** *I found the following to be necessary for Debian and Ubuntu distros of Linux. You may not be able to access your* `docker.service` *over TLS without this modifcation.*
+**NOTE:** *I found the following necessary for Debian and Ubuntu distros. You may not be able to access your* `docker.service` *over TLS without this modification.*
 
-Here, we are not changing any existing files in the systemd service directories. We are simply adding an override configuration that will enable TLS for the Docker daemon.
+Here, we are not changing existing files in the systemd service directories. We are simply adding an override configuration to enable TLS for the `docker.service`.
 
 First, create the `override.conf` file for the `docker.service`.
 
@@ -241,13 +245,13 @@ ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375
 EOL
 ```
 
-Next, create the service directory to allow the Docker daemon use of your new configuration.
+Next, create the service directory to allow the `docker.service` to use your new configuration.
 
 ```bash
 sudo mkdir -v /etc/systemd/system/docker.service.d
 ```
 
-If you get the following warning then the directory already exists. So, all we need to do next is copy the new configuration file to that directory, reload the systemd daemon, and restart the Docker daemon.
+If you get the following warning, then the directory already exists. At which point, we copy the new configuration file to that directory, reload the systemd daemon, and restart the `docker.service`.
 
 ```warning
 mkdir: cannot create directory ‘/etc/systemd/system/docker.service.d’: File exists
@@ -260,9 +264,9 @@ sudo cp -v override.conf /etc/systemd/system/docker.service.d/
 sudo systemctl daemon-reload
 ```
 
-Later, we will restart the `docker.service`. Before we do that, we need to make the server credentials available to the Docker daemon. 
+Later, we will restart the `docker.service`. Before we do that, we need to make the server credentials available to the `docker.service`. 
 
-**2. Create a directory for the credentials for the server and copy the credentials into the new directory.**
+**2. Create a directory for the server's credentials and copy the credentials into the new directory.**
 
 ```bash
 cd ~/.docker/tls
@@ -272,7 +276,7 @@ sudo cp -v {ca,server-cert,server-key}.pem /etc/docker/.tls/
 
 Now that the credentials are in place, we need to create the `daemon.json` for the `docker.service`.
 
-**NOTE:** *If the* `/etc/docker/daemon.json` *already exists, then do not run the following* `cat` *command. Simply open your existing* `/etc/docker/daemon.json` *in your preferred editor and add the following* `json` *data to your existing* `/etc/docker/daemon.json`*.* 
+**NOTE:** *If the* `/etc/docker/daemon.json` *already exists, do not run the following* `cat` *command. Simply open your existing* `/etc/docker/daemon.json` *in your preferred editor and add the following* `json` *data to your existing* `/etc/docker/daemon.json`*.* 
 
 ```bash
 cat > ~/.docker/daemon.json <<EOL
@@ -285,13 +289,13 @@ cat > ~/.docker/daemon.json <<EOL
 EOL
 ```
 
-Now, we can reload the system daemon and restart `docker.service`.
+Now, we restart the `docker.service`.
 
 ```bash
 sudo systemctl restart docker
 ```
 
-Next, from your `~/.docker/tls` directory, test your connection with TLS.
+Next, from within your `~/.docker/tls` directory, test your connection with TLS.
 
 ```bash
 docker --tlsverify \
@@ -301,7 +305,7 @@ docker --tlsverify \
 -H=$DOCKER_HOST_FQDN:2375 version
 ```
 
-A successful test of your credentials should produce the following or something like it.
+A successful test of your credentials should produce something like the following.
 
 ```bash
 Client: Docker Engine - Community
@@ -333,7 +337,7 @@ Server: Docker Engine - Community
   GitCommit:        de40ad0
 ```
 
-**3. Finally, we can secure the connection by default.**
+**3. Finally, we can secure the client's connection by default.**
 
 Copy your credentials to your `/home/.docker` directory.
 
@@ -341,19 +345,17 @@ Copy your credentials to your `/home/.docker` directory.
 cp -v {ca,cert,key}.pem ~/.docker
 ```
 
-After which, you can simply do the following.
+After which, you can do the following.
 
 ```bash
 docker version # If this works, you're in the crypto!
 ```
 
-For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory and they're good as gold!
+For any client that needs to connect to your newly secured Docker daemon socket, copy the contents of your `~/.docker/` directory into their `~/.docker` directory, and they're good as gold!
 
-**4. Live long, and Docker!**
+**Live long, and Docker!**
 
 ![Live long, and Docker!](https://media1.tenor.com/m/A3s-Mk6G2-kAAAAC/star-trek-spock.gif)
-
-
 
 ---
 
