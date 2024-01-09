@@ -31,10 +31,10 @@ export DOCKER_SERVICE_DIR="/etc/systemd/system/docker.service.d"
 # server credentials.
 export DOCKER_TLS_DIR="/etc/docker/.tls"
 
-# The `subjectAltName` for your CA credentials. # If the IP
+# The `subjectAltName` for your CA credentials. If the IP
 # address of your host machine changes you'll need to recreate
 # and reinstall your server credentials.
-export CERT_SAN_CONFIGURATOIN="$DOCKER_HOST_FQDN,IP:$DOCKER_HOST_IP,IP:127.0.0.1"
+export CERT_SAN_CONFIGURATION="$DOCKER_HOST_FQDN,IP:$DOCKER_HOST_IP,IP:127.0.0.1"
 
 # Set the docker host.
 export DOCKER_HOST=tcp://$DOCKER_HOST_FQDN:2375
@@ -119,7 +119,7 @@ openssl req -subj "/CN=$DOCKER_HOST_FQDN" -sha256 -new \
 Create the configuration file that will inform `opnessl` of the Subject Alt Name (SAN).
 
 ```bash
-echo -e "subjectAltName=DNS:$CERT_SAN_CONFIGURATOIN" > server.cnf
+echo -e "subjectAltName=DNS:$CERT_SAN_CONFIGURATION" > server.cnf
 ```
 
 Next, set the extended usage attributes of the Docker daemon key to server auth only.
