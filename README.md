@@ -279,15 +279,18 @@ sudo cp -v {ca,server-cert,server-key}.pem /etc/docker/.tls/
 
 Now that the credentials are in place, we need to create the `daemon.json` for the `docker.service`.
 
-**NOTE:** *If the* `/etc/docker/daemon.json` *already exists, do not run the following* `cat` *command. Simply open your existing* `/etc/docker/daemon.json` *in your preferred editor and add the following* `json` *data to your existing* `/etc/docker/daemon.json`*.* 
+**NOTE:** *If the* `/etc/docker/daemon.json` *already exists, do not run the following* `cat` *command. Simply open your existing* `/etc/docker/daemon.json` *in your preferred editor and add the following* `json` *data to your existing* `/etc/docker/daemon.json`*. Also, even if you are not running a local registry, you still need the `insecure-registries` setting in your `daemon.json`. Otherwise you will encounter the following error when attempting to use docker with TLS: `http: server gave HTTP response to HTTPS client` Remember to change the IP or IP range to the one that matches your `$DOCKER_HOST_IP`*
+
+
 
 ```bash
-cat > ~/.docker/daemon.json <<EOL
+sudo cat > /etc/docker/daemon.json <<EOL
 {
   "tlsverify": true,
   "tlscacert": "/etc/docker/.tls/ca.pem",
   "tlscert": "/etc/docker/.tls/server-cert.pem",
-  "tlskey": "/etc/docker/.tls/server-key.pem"
+  "tlskey": "/etc/docker/.tls/server-key.pem",
+  "insecure-registries": ["127.0.0.0/8"]
 }
 EOL
 ```
@@ -354,7 +357,7 @@ After which, you can do the following.
 docker version # If this works, you're in the crypto!
 ```
 
-**4. Add the environment variables to your `~/.docker` directory and `~/.profile`. **
+**4. Add the environment variables to your `~/.docker` directory and `~/.profile`.**
 
 You TLS works now because the environment variables are still in memory, while will be flushed upon reboot. We can resolve this by creating a `.env_docker` file and loading it at login.
 
